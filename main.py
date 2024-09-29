@@ -29,6 +29,9 @@ class Pool:
         self.head = Sample(np.full(3,np.inf))
         self.tail = Sample(np.full(3,-np.inf))
         self.head.addChild(self.tail)
+        self.nodes = set()
+    def __len__(self):
+        return len(self.nodes)
     def add(self,nNode:Sample):
         queue = deque([self.head])
         visited = set()
@@ -47,16 +50,22 @@ class Pool:
                     cNode.children.remove(c)
                     nNode.addChild(c)
                 cNode.addChild(nNode)
+                self.nodes.add(cNode)
     def pop(self,sNodes:Set[Sample]):
         outerChildren:Set[Sample] = set()
+        self.nodes-=sNodes
         for p in sNodes:
             outerChildren.update(p.children)
         outerChildren-=sNodes
         for c in outerChildren:
             c.parents-=sNodes
             c.addParent(self.head)
+        self.tail.parents-=sNodes
+        self.head.children-=sNodes
         return sNodes
     def sample(self, n):
+        if len(self)==0:
+            raise ValueError("Cannot sample from an empty pool")
         queue = deque(self.head.children)
         selected = set()
         while queue and len(selected)<n:
@@ -66,8 +75,7 @@ class Pool:
             selected.add(cNode)
             queue.extend(cNode.children)
         selected = list(self.pop(selected))
-        # repeat samples until we get enough if n>samples we have
-        return (selected * ((n // len(selected)) + 1))[:n]
+        return [selected[i % len(selected)] for i in range(n)]
 
 A = Sample([1,2,3])
 B = Sample([1,2,4])
