@@ -75,7 +75,7 @@ class Pool:
             selected.add(cNode)
             queue.extend(cNode.children)
         selected = list(self.pop(selected))
-        return [selected[i % len(selected)] for i in range(n)]
+        return (selected * ((n // len(selected)) + 1))[:n]
 
 A = Sample([1,2,3])
 B = Sample([1,2,4])
