@@ -13,14 +13,11 @@ class Sample:
         self.scores = np.array(scores)
         self.children: Set['Sample'] = set()
         self.parents: Set['Sample'] = set()
-    def __eq__(self,other):
-        if not isinstance(other, Sample):
-            return NotImplemented
-        return self.id==other.id
-    def __hash__(self) -> int: return hash(self.id)
-    def __repr__(self): return self.name if self.name else f"[#{self.id} {self.scores}]"
+    def __hash__(self): return hash(self.id)
+    def __eq__(self, other): return self.id==other.id
     def __lt__(self, other): return any(self.scores<other.scores) and all(self.scores<=other.scores)
     def __gt__(self, other): return any(self.scores>other.scores) and all(self.scores>=other.scores)
+    def __repr__(self): return self.name if self.name else f"[#{self.id} {self.scores}]"
     def addChild(self, c:"Sample"):
         self.children.add(c)
         c.parents.add(self)
@@ -57,6 +54,8 @@ class Pool:
                     cNode.children.remove(c)
                     nNode.addChild(c)
                 cNode.addChild(nNode)
+        if len(nNode.children)==0:
+            nNode.addChild(self.tail)
     def pop(self,sNodes:Set[Sample]):
         outerChildren:Set[Sample] = set()
         self.nodes-=sNodes
@@ -81,21 +80,17 @@ class Pool:
             queue.extend(cNode.children)
         selected = list(self.pop(selected))
         return (selected * ((n // len(selected)) + 1))[:n]
-    
+
     def viz(self):
         G = nx.DiGraph()
-        G.add_node(self.head)
-        G.add_node(self.tail)
-        for node in self.nodes:
-            G.add_node(node)
+        all_nodes = [self.head] + list(self.nodes) + [self.tail]
+        G.add_nodes_from(all_nodes)
         
-        for node in [self.head] + list(self.nodes):
+        for node in all_nodes:
             for child in node.children:
                 G.add_edge(node, child)
         
         pos = nx.spring_layout(G)
-        pos[self.head] = (1, 1)
-        pos[self.tail] = (0, 0)
         
         plt.figure(figsize=(12, 8))
         nx.draw(G, pos, with_labels=True, node_color='lightblue', 
@@ -113,13 +108,11 @@ print(A,B,C)
 pass
 
 pool = Pool()
-pass
 pool.add(A)
-pass
 pool.add(B)
-pass
 pool.add(C)
-pass
 pool.viz()
-
+D = Sample([1,4,2], name="D 1,4,2")
+pool.add(D)
+pool.viz()
 pass
